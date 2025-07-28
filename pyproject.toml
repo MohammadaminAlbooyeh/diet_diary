@@ -1,0 +1,273 @@
+[project]
+name = "diet_diary"
+version = "0.0.1"
+description = "A mobile application for tracking daily calorie intake."
+requires-python = ">=3.11"
+license = "MIT"
+authors = [
+    { name = "Your Name", email = "your.email@example.com" }
+]
+
+[project.urls]
+Homepage = "https://www.example.com/diet-diary"
+"Bug Tracker" = "https://www.example.com/diet-diary/issues"
+"Source Code" = "https://www.example.com/diet-diary"
+
+[build-system]
+requires = [
+    "briefcase>=0.3.17",
+    "setuptools>=69.0.0",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.briefcase]
+# The following sections are used to configure the briefcase packaging
+# process.
+
+# The documenation for each setting can be found at
+# https://briefcase.readthedocs.io/en/latest/reference/project.html
+
+# The template to use for new projects
+template = "https://github.com/beeware/briefcase-template"
+
+# The version of the template to use
+template_branch = "main"
+
+# The name of the bundle that will be produced.
+bundle = "com.amin.dietdiary" # <--- IMPORTANT: Adjust this to your bundle ID
+
+# The project's formal name.
+formal_name = "Diet Diary Mobile App" # <--- IMPORTANT: Adjust this to your Formal Name
+
+# The project's informal name.
+# This is the name that will be displayed to the user.
+# If it is not specified, the formal name will be used.
+# If it is specified, it will be used in place of the formal name
+# when a shorter name is required (e.g., in the menu bar).
+# informal_name = "Diet Diary"
+
+# The project's author.
+author = "Amin" # <--- IMPORTANT: Adjust this to your Author Name
+
+# The project's author's email address.
+author_email = "amin@example.com" # <--- IMPORTANT: Adjust this to your email
+
+# The project's URL.
+url = "https://www.example.com/diet-diary"
+
+# The project's license.
+license = "MIT"
+
+# The project's icon.
+# This can be a path to a PNG file, or a dictionary of paths to PNG files
+# for different platforms.
+icon = "src/diet_diary/resources/diet_diary"
+
+# The project's splash screen.
+# This can be a path to a PNG file, or a dictionary of paths to PNG files
+# for different platforms.
+# splash_screen = "src/diet_diary/resources/splash"
+
+# The project's supported platforms.
+platforms = {
+    # You can specify a minimum OS version for iOS and macOS.
+    # For example, to support iOS 13 and macOS 10.15:
+    # "ios" = { system_version = "13.0" },
+    # "macOS" = { system_version = "10.15" },
+
+    "macOS" = { },
+    "linux" = { },
+    "windows" = { },
+    "ios" = { },
+    "android" = { },
+    "web" = { },
+}
+
+
+# Configuration for the macOS platform
+[tool.briefcase.app.diet_diary.macOS]
+requires = [
+    "toga", # <--- THIS IS THE CRUCIAL LINE TO ADD/CONFIRM
+]
+
+# The following will be included in the app bundle.
+# If you have a platform-specific dependency, add it here.
+# For example, if you are using PyQt, you might need to
+# include the PyQt wheel for macOS.
+# macOS_requires = []
+
+# The following will be included in the app bundle.
+# If you have a platform-specific dependency, add it here.
+# For example, if you are using PyQt, you might need to
+# include the PyQt wheel for macOS.
+# macOS_requires = []
+
+# You can specify a minimum OS version for macOS.
+# For example, to support macOS 10.15:
+# system_version = "10.15"
+
+# The list of environment variables that will be set in the app's environment.
+# env = {
+#     "VAR_NAME": "value",
+# }
+
+# The list of frameworks that will be included in the app bundle.
+# frameworks = []
+
+# The list of extra content to include in the app bundle.
+# For example, if you have a data file that needs to be included:
+# include_extra_content = [
+#     "path/to/data.txt",
+# ]
+
+# The list of extra content to exclude from the app bundle.
+# exclude_extra_content = []
+
+
+# Configuration for the Linux platform
+[tool.briefcase.app.diet_diary.linux]
+requires = [
+    "toga", # <--- THIS IS THE CRUCIAL LINE TO ADD/CONFIRM
+]
+# The following will be included in the app bundle.
+# If you have a platform-specific dependency, add it here.
+# For example, if you are using PyQt, you might need to
+# include the PyQt wheel for Linux.
+# linux_requires = []
+
+# The list of environment variables that will be set in the app's environment.
+# env = {
+#     "VAR_NAME": "value",
+# }
+
+# The list of frameworks that will be included in the app bundle.
+# frameworks = []
+
+# The list of extra content to include in the app bundle.
+# For example, if you have a data file that needs to be included:
+# include_extra_content = [
+#     "path/to/data.txt",
+# ]
+
+# The list of extra content to exclude from the app bundle.
+# exclude_extra_content = []
+
+
+# Configuration for the Windows platform
+[tool.briefcase.app.diet_diary.windows]
+requires = [
+    "toga", # <--- THIS IS THE CRUCIAL LINE TO ADD/CONFIRM
+]
+# The following will be included in the app bundle.
+# If you have a platform-specific dependency, add it here.
+# For example, if you are using PyQt, you might need to
+# include the PyQt wheel for Windows.
+# windows_requires = []
+
+# The list of environment variables that will be set in the app's environment.
+# env = {
+#     "VAR_NAME": "value",
+# }
+
+# The list of frameworks that will be included in the app bundle.
+# frameworks = []
+
+# The list of extra content to include in the app bundle.
+# For example, if you have a data file that needs to be included:
+# include_extra_content = [
+#     "path/to/data.txt",
+# ]
+
+# The list of extra content to exclude from the app bundle.
+# exclude_extra_content = []
+
+
+# Configuration for the iOS platform
+[tool.briefcase.app.diet_diary.ios]
+requires = [
+    "toga", # <--- THIS IS THE CRUCIAL LINE TO ADD/CONFIRM
+]
+# The following will be included in the app bundle.
+# If you have a platform-specific dependency, add it here.
+# For example, if you are using PyQt, you might need to
+# include the PyQt wheel for iOS.
+# ios_requires = []
+
+# You can specify a minimum OS version for iOS.
+# For example, to support iOS 13:
+# system_version = "13.0"
+
+# The list of environment variables that will be set in the app's environment.
+# env = {
+#     "VAR_NAME": "value",
+# }
+
+# The list of frameworks that will be included in the app bundle.
+# frameworks = []
+
+# The list of extra content to include in the app bundle.
+# For example, if you have a data file that needs to be included:
+# include_extra_content = [
+#     "path/to/data.txt",
+# ]
+
+# The list of extra content to exclude from the app bundle.
+# exclude_extra_content = []
+
+
+# Configuration for the Android platform
+[tool.briefcase.app.diet_diary.android]
+requires = [
+    "toga", # <--- THIS IS THE CRUCIAL LINE TO ADD/CONFIRM
+]
+# The following will be included in the app bundle.
+# If you have a platform-specific dependency, add it here.
+# For example, if you are using PyQt, you might need to
+# include the PyQt wheel for Android.
+# android_requires = []
+
+# The list of environment variables that will be set in the app's environment.
+# env = {
+#     "VAR_NAME": "value",
+# }
+
+# The list of frameworks that will be included in the app bundle.
+# frameworks = []
+
+# The list of extra content to include in the app bundle.
+# For example, if you have a data file that needs to be included:
+# include_extra_content = [
+#     "path/to/data.txt",
+# ]
+
+# The list of extra content to exclude from the app bundle.
+# exclude_extra_content = []
+
+
+# Configuration for the Web platform
+[tool.briefcase.app.diet_diary.web]
+requires = [
+    "toga", # <--- THIS IS THE CRUCIAL LINE TO ADD/CONFIRM
+]
+# The following will be included in the app bundle.
+# If you have a platform-specific dependency, add it here.
+# For example, if you are using PyQt, you might need to
+# include the PyQt wheel for Web.
+# web_requires = []
+
+# The list of environment variables that will be set in the app's environment.
+# env = {
+#     "VAR_NAME": "value",
+# }
+
+# The list of frameworks that will be included in the app bundle.
+# frameworks = []
+
+# The list of extra content to include in the app bundle.
+# For example, if you have a data file that needs to be included:
+# include_extra_content = [
+#     "path/to/data.txt",
+# ]
+
+# The list of extra content to exclude from the app bundle.
+# exclude_extra_content = []
