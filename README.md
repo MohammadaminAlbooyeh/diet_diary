@@ -1,18 +1,18 @@
-# Diet Diary Mobile App
+# Diet Diary App
 
 ## Overview
-The Diet Diary Mobile App is a calorie tracking application that allows users to log their daily food intake and monitor their calorie consumption. It consists of a FastAPI backend and a React Native frontend.
+The Diet Diary App is a calorie tracking application that allows users to log their daily food intake and monitor their calorie consumption. It consists of a FastAPI backend and a React frontend.
 
 ## Features
 - Add calorie records with date, food name, and calorie count.
 - View all calorie records.
-- Interactive mobile interface.
+- Interactive web interface.
 
 ## Backend
 The backend is built using FastAPI and SQLite. It provides the following API endpoints:
 
-- `GET /records`: Fetch all calorie records.
-- `POST /records`: Add a new calorie record.
+- `GET /entries`: Fetch all calorie entries.
+- `POST /entries`: Add a new calorie entry.
 
 ### Running the Backend
 1. Install dependencies:
@@ -26,7 +26,7 @@ The backend is built using FastAPI and SQLite. It provides the following API end
 3. Access the API documentation at `http://127.0.0.1:8000/docs`.
 
 ## Frontend
-The frontend is built using React Native and integrates with the backend API to display and add calorie records.
+The frontend is built using React and integrates with the backend API to display and add calorie entries.
 
 ### Running the Frontend
 1. Navigate to the frontend directory.
@@ -36,24 +36,31 @@ The frontend is built using React Native and integrates with the backend API to 
    ```
 3. Start the development server:
    ```bash
-   npm start
+   npm run dev
    ```
 
 ## Requirements
-- Python 3.8+
+
+- Python 3.11+
 - Node.js
 - SQLite
 
 ## Installation
+
 1. Clone the repository:
+
    ```bash
-   git clone https://github.com/MohammadaminAlbooyeh/diet_diary_mobile_app.git
+   git clone https://github.com/MohammadaminAlbooyeh/diet_diary_app.git
    ```
+
 2. Navigate to the project directory:
+
    ```bash
-   cd diet_diary_mobile_app
+   cd diet_diary_app
    ```
+
 3. Follow the backend and frontend setup instructions.
 
 ## License
+
 This project is licensed under the MIT License.
