@@ -1,7 +1,6 @@
 # backend/database.py
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, declarative_base
 
 # SQLite database URL. The database file 'sql_app.db' will be created here.
 SQLALCHEMY_DATABASE_URL = "sqlite:///./sql_app.db"
@@ -29,3 +28,8 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# Add this at the end of the file to create tables in the database
+if __name__ == "__main__":
+    from models import CalorieEntry  # Import all models here
+    Base.metadata.create_all(engine)

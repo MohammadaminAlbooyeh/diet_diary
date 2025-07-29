@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, Dict
+from datetime import datetime # Import datetime for explicit conversion
 
 import models, database
 import food_data
@@ -41,10 +42,12 @@ class CalorieEntryResponse(BaseModel):
     id: int
     food_name: str
     calories: float
-    consumed_at: str # Will be returned as a string (ISO format)
+    # This field is expected to be a string in the response model
+    consumed_at: str
 
     class Config:
         orm_mode = True # Enables Pydantic to read data directly from SQLAlchemy models
+        # Removed json_encoders here, as we'll handle conversion explicitly for robustness
 
 # Dependency function to get a database session
 # This ensures a session is created for each request and closed afterwards.
@@ -57,7 +60,7 @@ def get_db():
 
 ## API Endpoints
 
-# NEW ENDPOINT: Get Food Suggestions for Autocomplete
+# Endpoint to get food suggestions for autocomplete in the frontend
 @app.get("/food-suggestions/", response_model=Dict[str, float])
 def get_food_suggestions():
     """
@@ -66,13 +69,15 @@ def get_food_suggestions():
     """
     return food_data.FOOD_CALORIES
 
+# Root endpoint for a simple health check or welcome message
 @app.get("/")
 def read_root():
     """
-    Root endpoint for a simple health check or welcome message.
+    Returns a simple message to confirm the API is running.
     """
     return {"message": "Hello from FastAPI with Database!"}
 
+# Endpoint to create a new calorie entry
 @app.post("/entries/", response_model=CalorieEntryResponse)
 def create_calorie_entry(entry: CalorieEntryCreate, db: Session = Depends(get_db)):
     """
@@ -99,12 +104,19 @@ def create_calorie_entry(entry: CalorieEntryCreate, db: Session = Depends(get_db
         # If calories were manually provided, use the user's input
         final_calories = entry.calories
 
+    # Create a new CalorieEntry model instance
     db_entry = models.CalorieEntry(food_name=entry.food_name, calories=final_calories)
     db.add(db_entry)  # Add the new entry object to the session
     db.commit()       # Commit the transaction to save to the database
     db.refresh(db_entry) # Refresh the object to get any database-generated values (like 'id', 'consumed_at')
+
+    # NEW ROBUST FIX: Explicitly convert consumed_at to string before returning
+    # This ensures Pydantic receives a string, bypassing potential serialization issues.
+    db_entry.consumed_at = db_entry.consumed_at.isoformat()
+
     return db_entry
 
+# Endpoint to retrieve all calorie entries
 @app.get("/entries/", response_model=list[CalorieEntryResponse])
 def read_calorie_entries(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """
@@ -112,4 +124,10 @@ def read_calorie_entries(skip: int = 0, limit: int = 100, db: Session = Depends(
     Supports basic pagination with `skip` and `limit` parameters.
     """
     entries = db.query(models.CalorieEntry).offset(skip).limit(limit).all()
+    
+    # NEW ROBUST FIX: Explicitly convert consumed_at to string for each entry
+    # This is needed for the list of entries as well.
+    for entry in entries:
+        entry.consumed_at = entry.consumed_at.isoformat()
+
     return entries
