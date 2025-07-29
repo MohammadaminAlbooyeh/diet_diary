@@ -1,5 +1,5 @@
 # backend/main.py
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status # Import status for HTTP status codes
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,7 +47,6 @@ class CalorieEntryResponse(BaseModel):
 
     class Config:
         orm_mode = True # Enables Pydantic to read data directly from SQLAlchemy models
-        # Removed json_encoders here, as we'll handle conversion explicitly for robustness
 
 # Dependency function to get a database session
 # This ensures a session is created for each request and closed afterwards.
@@ -94,7 +93,7 @@ def create_calorie_entry(entry: CalorieEntryCreate, db: Session = Depends(get_db
         if auto_calculated_calories is None:
             # If calories could not be found and user didn't provide them, raise an error
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST, # Use status.HTTP_400_BAD_REQUEST
                 detail="Calories not provided and food name not found in database. Please provide calories manually."
             )
         else:
@@ -110,11 +109,26 @@ def create_calorie_entry(entry: CalorieEntryCreate, db: Session = Depends(get_db
     db.commit()       # Commit the transaction to save to the database
     db.refresh(db_entry) # Refresh the object to get any database-generated values (like 'id', 'consumed_at')
 
-    # NEW ROBUST FIX: Explicitly convert consumed_at to string before returning
+    # Explicitly convert consumed_at to string before returning
     # This ensures Pydantic receives a string, bypassing potential serialization issues.
     db_entry.consumed_at = db_entry.consumed_at.isoformat()
 
     return db_entry
+
+# NEW ENDPOINT: Delete a calorie entry
+@app.delete("/entries/{entry_id}", status_code=status.HTTP_204_NO_CONTENT) # 204 No Content for successful deletion
+def delete_calorie_entry(entry_id: int, db: Session = Depends(get_db)):
+    """
+    Deletes a calorie entry by its ID.
+    Returns 204 No Content on successful deletion, 404 if not found.
+    """
+    db_entry = db.query(models.CalorieEntry).filter(models.CalorieEntry.id == entry_id).first()
+    if db_entry is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entry not found") # Use status.HTTP_404_NOT_FOUND
+    
+    db.delete(db_entry)
+    db.commit()
+    return {"message": "Entry deleted successfully"} # This return is technically ignored for 204, but good practice.
 
 # Endpoint to retrieve all calorie entries
 @app.get("/entries/", response_model=list[CalorieEntryResponse])
@@ -125,8 +139,8 @@ def read_calorie_entries(skip: int = 0, limit: int = 100, db: Session = Depends(
     """
     entries = db.query(models.CalorieEntry).offset(skip).limit(limit).all()
     
-    # NEW ROBUST FIX: Explicitly convert consumed_at to string for each entry
-    # This is needed for the list of entries as well.
+    # Explicitly convert consumed_at to string for each entry
+    # This is needed for the list of entries as well to match the Pydantic response model.
     for entry in entries:
         entry.consumed_at = entry.consumed_at.isoformat()
 

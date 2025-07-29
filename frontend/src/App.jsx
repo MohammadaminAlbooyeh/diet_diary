@@ -28,7 +28,7 @@ function App() {
       setEntries(response.data);
     } catch (err) {
       console.error("Error fetching entries:", err);
-      setError("Failed to fetch entries. Please check the backend server.");
+      setError("Failed to fetch entries. Please check the backend server and network connection.");
     } finally {
       setLoading(false);
     }
@@ -51,7 +51,7 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!foodName) {
+    if (!foodName.trim()) {
       setError("Please fill in the food name.");
       return;
     }
@@ -61,10 +61,15 @@ function App() {
     };
 
     if (calories !== '') {
-        payload.calories = parseFloat(calories);
+        const parsedCalories = parseFloat(calories);
+        if (isNaN(parsedCalories)) {
+            setError("Please enter a valid number for calories.");
+            return;
+        }
+        payload.calories = parsedCalories;
     } else {
         const suggestedCal = foodSuggestions[foodName.toLowerCase()];
-        if (suggestedCal) {
+        if (suggestedCal !== undefined) {
             payload.calories = suggestedCal;
         }
     }
@@ -79,9 +84,23 @@ function App() {
       console.error("Error creating entry:", err.response ? err.response.data : err);
       setError(err.response && err.response.data && err.response.data.detail
                 ? err.response.data.detail
-                : "Failed to add entry. Please try again.");
+                : "Failed to add entry. Please check the backend server or input data.");
     }
   };
+
+  // NEW: Function to handle deleting an entry
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`${API_BASE_URL}/entries/${id}`);
+      // Filter out the deleted entry from the current state
+      setEntries(entries.filter(entry => entry.id !== id));
+      setError(null); // Clear any previous errors
+    } catch (err) {
+      console.error("Error deleting entry:", err.response ? err.response.data : err);
+      setError("Failed to delete entry. Please try again.");
+    }
+  };
+
 
   const chartData = entries.reduce((acc, entry) => {
     const existingFood = acc.find(item => item.name.toLowerCase() === entry.food_name.toLowerCase());
@@ -96,12 +115,13 @@ function App() {
   const totalCalories = entries.reduce((sum, entry) => sum + entry.calories, 0);
   const calorieProgressPercent = (totalCalories / MAX_DAILY_CALORIES) * 100;
 
+
   return (
     <div className="App">
       <h1>Calorie Tracker</h1>
 
-      <div className="main-content-container"> {/* New container for layout */}
-        <div className="left-panel"> {/* Left side for input, chart, and progress */}
+      <div className="main-content-container">
+        <div className="left-panel">
           {/* Select Food to Add Box */}
           <div className="input-section">
             <h2>Select Food to Add</h2>
@@ -113,7 +133,7 @@ function App() {
                 onChange={(e) => {
                   setFoodName(e.target.value);
                   const suggestedCal = foodSuggestions[e.target.value.toLowerCase()];
-                  if (suggestedCal) {
+                  if (suggestedCal !== undefined) {
                     setCalories(suggestedCal.toString());
                   } else {
                     setCalories('');
@@ -139,7 +159,7 @@ function App() {
             </form>
           </div>
 
-          {error && <p style={{ color: 'red' }}>{error}</p>}
+          {error && <p style={{ color: 'red', textAlign: 'center', marginTop: '10px' }}>{error}</p>}
 
           {/* Daily Calorie Progress Bar */}
           <div className="calorie-progress-container">
@@ -156,7 +176,7 @@ function App() {
               </div>
             </div>
             {totalCalories >= MAX_DAILY_CALORIES && (
-                <p style={{ color: 'orange', fontWeight: 'bold' }}>
+                <p style={{ color: 'orange', fontWeight: 'bold', textAlign: 'center', marginTop: '10px' }}>
                     You've reached or exceeded your daily calorie goal!
                 </p>
             )}
@@ -168,7 +188,7 @@ function App() {
           {loading ? (
             <p>Loading chart...</p>
           ) : chartData.length === 0 ? (
-            <p>Add entries to see the calorie distribution chart.</p>
+            <p style={{ textAlign: 'center' }}>Add entries to see the calorie distribution chart.</p>
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -194,23 +214,24 @@ function App() {
               </PieChart>
             </ResponsiveContainer>
           )}
-        </div> {/* End left-panel */}
+        </div>
 
-        {/* NEW: Right Panel for Daily Consumptions Table */}
+        {/* Right Panel for Daily Consumptions Table */}
         <div className="right-panel">
-          <h2>Daily Consumptions</h2>
+          <h2>Recorded Entries</h2>
           {loading ? (
             <p>Loading entries...</p>
           ) : entries.length === 0 ? (
-            <p>No daily consumptions recorded yet.</p>
+            <p style={{ textAlign: 'center' }}>No entries yet. Add some above!</p>
           ) : (
-            <div className="table-container"> {/* Added a container for table overflow */}
+            <div className="table-container">
               <table>
                 <thead>
                   <tr>
                     <th>Food</th>
                     <th>Calories</th>
                     <th>Time</th>
+                    <th>Actions</th> {/* NEW: Column for delete button */}
                   </tr>
                 </thead>
                 <tbody>
@@ -219,17 +240,25 @@ function App() {
                       <td>{entry.food_name}</td>
                       <td>{entry.calories.toFixed(2)}</td>
                       <td>{new Date(entry.consumed_at).toLocaleTimeString()}</td>
+                      <td>
+                        <button 
+                          className="delete-button" 
+                          onClick={() => handleDelete(entry.id)}
+                        >
+                          Delete
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
-        </div> {/* End right-panel */}
-      </div> {/* End main-content-container */}
+        </div>
+      </div>
 
-      {/* The original Recorded Entries list (optional, can be removed if table is sufficient) */}
-      <hr />
+      {/* The original Recorded Entries list (commented out as table is now primary) */}
+      {/* <hr />
       <h2>Recorded Entries (Total: {totalCalories.toFixed(2)} kcal)</h2>
       {loading ? (
         <p>Loading entries...</p>
@@ -244,7 +273,7 @@ function App() {
             </li>
           ))}
         </ul>
-      )}
+      )} */}
     </div>
   );
 }
