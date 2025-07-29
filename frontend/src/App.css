@@ -1,42 +1,246 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+/* frontend/src/App.css */
+
+/* General App container */
+.App {
+  font-family: 'Inter', Arial, sans-serif; /* Use Inter font */
+  max-width: 1200px; /* Increased max-width for two columns */
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 12px; /* More rounded corners */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Stronger shadow */
+  display: flex; /* Use flexbox for overall layout */
+  flex-direction: column; /* Stack children vertically initially */
+  gap: 20px; /* Space between sections */
+}
+
+h1, h2 {
+  color: #2c3e50; /* Darker, more professional color */
   text-align: center;
+  margin-bottom: 20px;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Main content container for two-column layout */
+.main-content-container {
+  display: flex;
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+  gap: 20px; /* Space between left and right panels */
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+.left-panel {
+  flex: 2; /* Takes 2 parts of available space */
+  min-width: 300px; /* Minimum width before wrapping */
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Space between elements in left panel */
+}
+
+.right-panel {
+  flex: 1; /* Takes 1 part of available space */
+  min-width: 280px; /* Minimum width for the table */
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Input Section Styles */
+.input-section {
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.input-section h2 {
+  color: #34495e;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.5em;
+}
+
+.input-section form {
+  display: flex;
+  flex-wrap: wrap; /* Allow inputs to wrap */
+  gap: 10px;
+  align-items: center;
+}
+
+.input-section form input[type="text"],
+.input-section form input[type="number"] {
+  flex: 1; /* Allow inputs to grow */
+  min-width: 150px; /* Minimum width for inputs */
+  padding: 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 1em;
+  box-sizing: border-box;
+}
+
+.input-section form button {
+  padding: 12px 20px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: bold;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.input-section form button:hover {
+  background-color: #218838;
+  transform: translateY(-2px);
+}
+
+/* Calorie Progress Bar Styles */
+.calorie-progress-container {
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.calorie-progress-container h2 {
+  color: #34495e;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.5em;
+}
+
+.calorie-progress-bar-background {
+  width: 100%;
+  height: 35px; /* Slightly taller */
+  background-color: #e9ecef; /* Lighter background */
+  border-radius: 18px;
+  overflow: hidden;
+  margin-top: 10px;
+  position: relative;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.calorie-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(to right, #28a745, #5cb85c); /* Vibrant green gradient */
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 1em;
+  transition: width 0.5s ease-in-out, background 0.5s ease-in-out;
+}
+
+/* Color change for exceeding goal */
+.calorie-progress-bar-fill[style*="width: 100%"] {
+  background: linear-gradient(to right, #ffc107, #dc3545); /* Warning to Danger gradient */
+}
+
+.calorie-progress-text {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  color: #333;
+  mix-blend-mode: difference;
+  text-shadow: 0 0 3px rgba(0,0,0,0.3); /* Add shadow for better readability */
+}
+
+/* Chart and Recorded Entries List Styles */
+hr {
+  border: 0;
+  height: 1px;
+  background: #e0e0e0;
+  margin: 30px 0;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  background-color: #f8f9fa;
+  margin-bottom: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: transform 0.2s ease;
+}
+
+li:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+
+/* Table Styles for Daily Consumptions */
+.right-panel h2 {
+  font-size: 1.5em;
+  margin-bottom: 20px;
+}
+
+.table-container {
+  max-height: 400px; /* Limit height and add scroll if content overflows */
+  overflow-y: auto;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse; /* Remove space between borders */
+  background-color: #ffffff;
+  border-radius: 8px;
+  overflow: hidden; /* Ensures rounded corners apply to table content */
+}
+
+th, td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #dee2e6; /* Light border for rows */
+}
+
+th {
+  background-color: #e9ecef; /* Header background */
+  color: #495057;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.9em;
+  position: sticky; /* Make header sticky when scrolling */
+  top: 0;
+  z-index: 1;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #f8f9fa; /* Zebra striping */
+}
+
+tbody tr:hover {
+  background-color: #e2e6ea; /* Hover effect for rows */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .main-content-container {
+    flex-direction: column; /* Stack panels vertically on small screens */
   }
-  to {
-    transform: rotate(360deg);
+
+  .left-panel, .right-panel {
+    flex: none; /* Remove flex grow */
+    width: 100%; /* Take full width */
+    min-width: unset; /* Remove min-width constraints */
   }
-}
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+  .input-section form input[type="text"],
+  .input-section form input[type="number"] {
+    width: 100%; /* Full width for inputs on small screens */
+    margin-right: 0;
   }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
 }

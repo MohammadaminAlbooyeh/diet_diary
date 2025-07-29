@@ -2,49 +2,52 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware # Import CORS middleware
+from fastapi.middleware.cors import CORSMiddleware
+from typing import Optional, Dict
 
 import models, database
+import food_data
 
+# Create database tables when the application starts
+# This will create the 'calorie_entries' table if it doesn't already exist.
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI()
 
-# --- CORS Configuration ---
-# These are the origins that are allowed to make requests to your backend
+# CORS (Cross-Origin Resource Sharing) Configuration
+# This allows your React frontend (running on a different port) to communicate with this backend.
 origins = [
     "http://localhost",
-    "http://localhost:5173", # Your React app's default address
-    "http://127.0.0.1:5173",  # Another common local address for React
-    # You can add other frontend URLs here if needed (e.g., production URL)
+    "http://localhost:5173",   # Default address for React Vite development server
+    "http://127.0.0.1:5173",   # Another common local address for React Vite
+    # Add your production frontend URL here when you deploy your app
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],  # Allows all HTTP methods (GET, POST, PUT, DELETE, etc.)
-    allow_headers=["*"],  # Allows all headers
+    allow_origins=origins,          # Specific origins allowed to make requests
+    allow_credentials=True,         # Allow cookies to be included in cross-origin HTTP requests
+    allow_methods=["*"],            # Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
+    allow_headers=["*"],            # Allow all headers
 )
-# --- End CORS Configuration ---
 
-
-# Pydantic model for creating a new Calorie Entry (for request body)
+# Pydantic model for the request body when creating a new Calorie Entry
 class CalorieEntryCreate(BaseModel):
     food_name: str
-    calories: float
+    calories: Optional[float] = None # Calories field is now optional
 
-# Pydantic model for reading Calorie Entry (for response body)
+# Pydantic model for the response body when reading or creating a Calorie Entry
 class CalorieEntryResponse(BaseModel):
     id: int
     food_name: str
     calories: float
-    consumed_at: str
+    consumed_at: str # Will be returned as a string (ISO format)
 
     class Config:
-        orm_mode = True
+        orm_mode = True # Enables Pydantic to read data directly from SQLAlchemy models
 
-# Dependency to get the database session
+# Dependency function to get a database session
+# This ensures a session is created for each request and closed afterwards.
 def get_db():
     db = database.SessionLocal()
     try:
@@ -52,19 +55,61 @@ def get_db():
     finally:
         db.close()
 
+## API Endpoints
+
+# NEW ENDPOINT: Get Food Suggestions for Autocomplete
+@app.get("/food-suggestions/", response_model=Dict[str, float])
+def get_food_suggestions():
+    """
+    Returns a dictionary of food names and their default calorie values
+    to be used for suggestions in the frontend.
+    """
+    return food_data.FOOD_CALORIES
+
 @app.get("/")
 def read_root():
+    """
+    Root endpoint for a simple health check or welcome message.
+    """
     return {"message": "Hello from FastAPI with Database!"}
 
 @app.post("/entries/", response_model=CalorieEntryResponse)
 def create_calorie_entry(entry: CalorieEntryCreate, db: Session = Depends(get_db)):
-    db_entry = models.CalorieEntry(food_name=entry.food_name, calories=entry.calories)
-    db.add(db_entry)
-    db.commit()
-    db.refresh(db_entry)
+    """
+    Creates a new calorie entry in the database.
+    If calories are not provided, attempts to auto-calculate from `food_data`.
+    """
+    final_calories: float
+
+    # If calories were not manually provided by the user
+    if entry.calories is None:
+        # Try to find calories from the predefined food_data list
+        auto_calculated_calories = food_data.get_calories_by_food_name(entry.food_name)
+
+        if auto_calculated_calories is None:
+            # If calories could not be found and user didn't provide them, raise an error
+            raise HTTPException(
+                status_code=400,
+                detail="Calories not provided and food name not found in database. Please provide calories manually."
+            )
+        else:
+            # If auto-calculated calories were found, use them
+            final_calories = auto_calculated_calories
+    else:
+        # If calories were manually provided, use the user's input
+        final_calories = entry.calories
+
+    db_entry = models.CalorieEntry(food_name=entry.food_name, calories=final_calories)
+    db.add(db_entry)  # Add the new entry object to the session
+    db.commit()       # Commit the transaction to save to the database
+    db.refresh(db_entry) # Refresh the object to get any database-generated values (like 'id', 'consumed_at')
     return db_entry
 
 @app.get("/entries/", response_model=list[CalorieEntryResponse])
 def read_calorie_entries(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """
+    Retrieves a list of all calorie entries from the database.
+    Supports basic pagination with `skip` and `limit` parameters.
+    """
     entries = db.query(models.CalorieEntry).offset(skip).limit(limit).all()
     return entries
