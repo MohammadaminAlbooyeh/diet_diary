@@ -1,279 +1,294 @@
+
+import React, { useState, useEffect } from 'react';
+import { PieChart, Pie, Cell, Legend, Tooltip } from 'recharts';
 // frontend/src/App.jsx
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import './App.css';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-const API_BASE_URL = 'http://127.0.0.1:8000';
-const MAX_DAILY_CALORIES = 2500; // Define your daily calorie goal
-
-const COLORS = [
-  '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF5733',
-  '#33FF57', '#3357FF', '#FF33A1', '#A133FF', '#33FFA1', '#FFBD33'
-];
+// ... (rest of your imports and component setup)
 
 function App() {
-  const [entries, setEntries] = useState([]);
+  // ... (all your useState declarations)
+
+  // Example state declarations (replace with your actual ones if needed)
   const [foodName, setFoodName] = useState('');
+  const [quantity, setQuantity] = useState('');
+  const [unit, setUnit] = useState('');
   const [calories, setCalories] = useState('');
+  const [caloriesPerUnit, setCaloriesPerUnit] = useState('');
   const [foodSuggestions, setFoodSuggestions] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [filteredSuggestions, setFilteredSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [entries, setEntries] = useState([]);
+  const [currentView, setCurrentView] = useState('dashboard');
+  const [error, setError] = useState('');
 
-  const fetchEntries = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await axios.get(`${API_BASE_URL}/entries/`);
-      setEntries(response.data);
-    } catch (err) {
-      console.error("Error fetching entries:", err);
-      setError("Failed to fetch entries. Please check the backend server and network connection.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchFoodSuggestions = async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/food-suggestions/`);
-      setFoodSuggestions(response.data);
-    } catch (err) {
-      console.error("Error fetching food suggestions:", err);
-    }
-  };
-
+  // Fetch food suggestions on mount
   useEffect(() => {
-    fetchEntries();
-    fetchFoodSuggestions();
+    fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/food-suggestions/`)
+      .then(res => res.json())
+      .then(data => setFoodSuggestions(data))
+      .catch(() => setFoodSuggestions({}));
   }, []);
 
+  // Fetch entries on mount (optional, for dashboard refresh)
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/entries/`)
+      .then(res => res.json())
+      .then(data => setEntries(data))
+      .catch(() => setEntries([]));
+  }, []);
+
+  // --- handleSubmit implementation ---
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!foodName.trim()) {
-      setError("Please fill in the food name.");
+    setError('');
+    const trimmedFood = foodName.trim();
+    if (!trimmedFood) {
+      setError('Please enter a food name.');
       return;
     }
-
+    if (!quantity || isNaN(Number(quantity)) || Number(quantity) <= 0) {
+      setError('Please enter a valid quantity.');
+      return;
+    }
+    // Find the food info (case-insensitive)
+    const foodKey = Object.keys(foodSuggestions).find(
+      key => key.toLowerCase() === trimmedFood.toLowerCase()
+    );
+    let caloriesPerUnitVal = caloriesPerUnit;
+    if (foodKey && foodSuggestions[foodKey]) {
+      caloriesPerUnitVal = foodSuggestions[foodKey].calories;
+    }
+    const totalCalories = Number(quantity) * Number(caloriesPerUnitVal);
+    if (!caloriesPerUnitVal || isNaN(totalCalories)) {
+      setError('Calories info not found for this food. Please select a valid food.');
+      return;
+    }
+    // Prepare payload
     const payload = {
-        food_name: foodName,
+      food_name: foodKey || trimmedFood,
+      calories: totalCalories
     };
-
-    if (calories !== '') {
-        const parsedCalories = parseFloat(calories);
-        if (isNaN(parsedCalories)) {
-            setError("Please enter a valid number for calories.");
-            return;
-        }
-        payload.calories = parsedCalories;
-    } else {
-        const suggestedCal = foodSuggestions[foodName.toLowerCase()];
-        if (suggestedCal !== undefined) {
-            payload.calories = suggestedCal;
-        }
-    }
-
     try {
-      const response = await axios.post(`${API_BASE_URL}/entries/`, payload);
-      setEntries([...entries, response.data]);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/entries/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.detail || 'Failed to add entry.');
+        return;
+      }
+      const newEntry = await response.json();
+      setEntries(prev => [newEntry, ...prev]);
       setFoodName('');
+      setQuantity('');
+      setUnit('');
       setCalories('');
-      setError(null);
+      setCaloriesPerUnit('');
+      setShowSuggestions(false);
+      setFilteredSuggestions([]);
     } catch (err) {
-      console.error("Error creating entry:", err.response ? err.response.data : err);
-      setError(err.response && err.response.data && err.response.data.detail
-                ? err.response.data.detail
-                : "Failed to add entry. Please check the backend server or input data.");
+      setError('Network error. Please try again.');
     }
   };
 
-  // NEW: Function to handle deleting an entry
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`${API_BASE_URL}/entries/${id}`);
-      // Filter out the deleted entry from the current state
-      setEntries(entries.filter(entry => entry.id !== id));
-      setError(null); // Clear any previous errors
-    } catch (err) {
-      console.error("Error deleting entry:", err.response ? err.response.data : err);
-      setError("Failed to delete entry. Please try again.");
-    }
-  };
+  const [timeoutId, setTimeoutId] = useState(null); // New state to manage timeout for onBlur
 
-
-  const chartData = entries.reduce((acc, entry) => {
-    const existingFood = acc.find(item => item.name.toLowerCase() === entry.food_name.toLowerCase());
-    if (existingFood) {
-      existingFood.value += entry.calories;
-    } else {
-      acc.push({ name: entry.food_name, value: entry.calories });
-    }
-    return acc;
-  }, []);
-
-  const totalCalories = entries.reduce((sum, entry) => sum + entry.calories, 0);
-  const calorieProgressPercent = (totalCalories / MAX_DAILY_CALORIES) * 100;
-
+  // ... (all your fetchEntries, fetchFoodSuggestions, useEffect, handleSubmit, handleDelete functions)
 
   return (
-    <div className="App">
-      <h1>Calorie Tracker</h1>
-
-      <div className="main-content-container">
-        <div className="left-panel">
-          {/* Select Food to Add Box */}
-          <div className="input-section">
-            <h2>Select Food to Add</h2>
-            <form onSubmit={handleSubmit}>
-              <input
-                type="text"
-                placeholder="Type or Select Food Name"
-                value={foodName}
-                onChange={(e) => {
-                  setFoodName(e.target.value);
-                  const suggestedCal = foodSuggestions[e.target.value.toLowerCase()];
-                  if (suggestedCal !== undefined) {
-                    setCalories(suggestedCal.toString());
-                  } else {
-                    setCalories('');
-                  }
-                }}
-                list="food-options"
-                required
-              />
-              <datalist id="food-options">
-                {Object.keys(foodSuggestions).map((food) => (
-                  <option key={food} value={food} />
-                ))}
-              </datalist>
-
-              <input
-                type="number"
-                step="0.01"
-                placeholder="Calories (Optional)"
-                value={calories}
-                onChange={(e) => setCalories(e.target.value)}
-              />
-              <button type="submit">Add Entry</button>
-            </form>
-          </div>
-
-          {error && <p style={{ color: 'red', textAlign: 'center', marginTop: '10px' }}>{error}</p>}
-
-          {/* Daily Calorie Progress Bar */}
-          <div className="calorie-progress-container">
-            <h2>Daily Calorie Goal: {MAX_DAILY_CALORIES} kcal</h2>
-            <div className="calorie-progress-bar-background">
-              <div
-                className="calorie-progress-bar-fill"
-                style={{ width: `${Math.min(calorieProgressPercent, 100)}%` }}
-              >
-                <span className="calorie-progress-text">
-                    {totalCalories.toFixed(2)} / {MAX_DAILY_CALORIES} kcal
-                    ({calorieProgressPercent.toFixed(1)}%)
-                </span>
-              </div>
-            </div>
-            {totalCalories >= MAX_DAILY_CALORIES && (
-                <p style={{ color: 'orange', fontWeight: 'bold', textAlign: 'center', marginTop: '10px' }}>
-                    You've reached or exceeded your daily calorie goal!
-                </p>
-            )}
-          </div>
-
-          <hr />
-
-          <h2>Calorie Distribution</h2>
-          {loading ? (
-            <p>Loading chart...</p>
-          ) : chartData.length === 0 ? (
-            <p style={{ textAlign: 'center' }}>Add entries to see the calorie distribution chart.</p>
-          ) : (
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  nameKey="name"
-                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                >
-                  {
-                    chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))
-                  }
-                </Pie>
-                <Tooltip formatter={(value, name) => [`${value} kcal`, name]} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          )}
+    <div className="App" style={{ minHeight: '100vh', minWidth: '100vw', maxWidth: '100vw', overflowX: 'hidden', background: '#fff', display: 'flex' }}>
+      {/* Sidebar with green scribble effect */}
+      <div className="sidebar" style={{ background: '#13b0c0', minWidth: 220, padding: '32px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '2px 0 10px rgba(0,0,0,0.07)' }}>
+        <div className="sidebar-header" style={{ marginBottom: 40 }}>
+          <h2 style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: '2em', color: '#fff' }}>Hi dear</h2>
         </div>
-
-        {/* Right Panel for Daily Consumptions Table */}
-        <div className="right-panel">
-          <h2>Recorded Entries</h2>
-          {loading ? (
-            <p>Loading entries...</p>
-          ) : entries.length === 0 ? (
-            <p style={{ textAlign: 'center' }}>No entries yet. Add some above!</p>
-          ) : (
-            <div className="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Food</th>
-                    <th>Calories</th>
-                    <th>Time</th>
-                    <th>Actions</th> {/* NEW: Column for delete button */}
-                  </tr>
-                </thead>
-                <tbody>
-                  {entries.map((entry) => (
-                    <tr key={entry.id}>
-                      <td>{entry.food_name}</td>
-                      <td>{entry.calories.toFixed(2)}</td>
-                      <td>{new Date(entry.consumed_at).toLocaleTimeString()}</td>
-                      <td>
-                        <button 
-                          className="delete-button" 
-                          onClick={() => handleDelete(entry.id)}
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+        <div className="sidebar-buttons" style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%', alignItems: 'center' }}>
+          <button className={`sidebar-button${currentView === 'dashboard' ? ' active' : ''}`} style={{ width: 170, fontSize: '1.2em', borderRadius: 12, border: 'none', background: '#13b0c0', fontWeight: 600, color: '#fff', boxShadow: currentView === 'dashboard' ? '0 0 8px #43ea4a55' : 'none' }} onClick={() => setCurrentView('dashboard')}>Dashboard</button>
+          <button className={`sidebar-button${currentView === 'weekly' ? ' active' : ''}`} style={{ width: 170, fontSize: '1.2em', borderRadius: 12, border: 'none', background: '#13b0c0', fontWeight: 600, color: '#fff', boxShadow: currentView === 'weekly' ? '0 0 8px #43ea4a55' : 'none' }} onClick={() => setCurrentView('weekly')}>Weekly Consume</button>
+          <button className={`sidebar-button${currentView === 'monthly' ? ' active' : ''}`} style={{ width: 170, fontSize: '1.2em', borderRadius: 12, border: 'none', background: '#13b0c0', fontWeight: 600, color: '#fff', boxShadow: currentView === 'monthly' ? '0 0 8px #43ea4a55' : 'none' }} onClick={() => setCurrentView('monthly')}>Monthly Consume</button>
         </div>
       </div>
 
-      {/* The original Recorded Entries list (commented out as table is now primary) */}
-      {/* <hr />
-      <h2>Recorded Entries (Total: {totalCalories.toFixed(2)} kcal)</h2>
-      {loading ? (
-        <p>Loading entries...</p>
-      ) : entries.length === 0 ? (
-        <p>No entries yet. Add some above!</p>
-      ) : (
-        <ul>
-          {entries.map((entry) => (
-            <li key={entry.id}>
-              <strong>{entry.food_name}:</strong> {entry.calories} calories (
-              {new Date(entry.consumed_at).toLocaleString()})
-            </li>
-          ))}
-        </ul>
-      )} */}
+      {/* Main Content */}
+      <div className="main-content" style={{ flex: 1, padding: '40px 0 0 0', display: 'flex', flexDirection: 'column', alignItems: 'stretch', width: '100%', minHeight: '100vh', background: '#fff' }}>
+        {/* Conditional rendering for dashboard, weekly, monthly */}
+        {currentView === 'dashboard' && (
+          <div style={{ width: '100%', height: '100%', background: '#fff', borderRadius: 18, boxShadow: '0 4px 24px rgba(0,0,0,0.10)', padding: '32px 32px 48px 32px', marginLeft: 0, boxSizing: 'border-box', display: 'flex', gap: 0, maxWidth: '100%' }}>
+            {/* Main (left) content */}
+            <div style={{ flex: 2, minWidth: 0 }}>
+              {/* Title */}
+              <h1 style={{ textAlign: 'center', fontFamily: 'inherit', fontWeight: 400, fontSize: '2.2em', color: '#000', marginBottom: 32 }}>Calorie Tracker</h1>
+
+          {/* Food Entry Row */}
+            <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 12, marginBottom: 24, alignItems: 'center', justifyContent: 'center' }}>
+              <input type="text" placeholder="Food" value={foodName} autoComplete="off"
+                style={{ width: 120, padding: 10, borderRadius: 8, border: '1.5px solid #bbb', fontSize: '1em', color: '#000', background: '#fff' }}
+                onFocus={() => {
+                  if (!foodName.trim()) setFilteredSuggestions(Object.keys(foodSuggestions));
+                  else setFilteredSuggestions(Object.keys(foodSuggestions).filter(f => f.toLowerCase().includes(foodName.trim().toLowerCase())));
+                  setShowSuggestions(true);
+                  if (timeoutId) clearTimeout(timeoutId);
+                }}
+                onClick={() => {
+                  if (!foodName.trim()) setFilteredSuggestions(Object.keys(foodSuggestions));
+                  else setFilteredSuggestions(Object.keys(foodSuggestions).filter(f => f.toLowerCase().includes(foodName.trim().toLowerCase())));
+                  setShowSuggestions(true);
+                  if (timeoutId) clearTimeout(timeoutId);
+                }}
+                onBlur={() => { const id = setTimeout(() => setShowSuggestions(false), 150); setTimeoutId(id); }}
+                onChange={e => {
+                  const val = e.target.value;
+                  setFoodName(val);
+                  const filtered = Object.keys(foodSuggestions).filter(f => f.toLowerCase().includes(val.trim().toLowerCase()));
+                  setFilteredSuggestions(filtered);
+                  setShowSuggestions(true);
+                  const foodInfo = foodSuggestions[val.trim().toLowerCase()];
+                  if (foodInfo) {
+                    setUnit(foodInfo.unit || '');
+                    setCaloriesPerUnit(foodInfo.calories || '');
+                    if (quantity && !isNaN(Number(quantity))) setCalories((Number(quantity) * Number(foodInfo.calories)).toString());
+                    else setCalories('');
+                  } else {
+                    setUnit(''); setCaloriesPerUnit(''); setCalories('');
+                  }
+                }}
+                required
+              />
+              {showSuggestions && filteredSuggestions.length > 0 && (
+                <ul style={{ position: 'absolute', zIndex: 10, background: '#fff', border: '1px solid #ccc', width: 120, maxHeight: 180, overflowY: 'auto', margin: 0, padding: 0, listStyle: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                  {filteredSuggestions.map((food) => (
+                    <li key={food} style={{ padding: '8px', cursor: 'pointer' }}
+                      onMouseDown={() => {
+                        setFoodName(food);
+                        const foodInfo = foodSuggestions[food.trim().toLowerCase()];
+                        setUnit(foodInfo?.unit || '');
+                        setCaloriesPerUnit(foodInfo?.calories || '');
+                        if (quantity && foodInfo?.calories) setCalories((Number(quantity) * Number(foodInfo.calories)).toString());
+                        else setCalories('');
+                        setShowSuggestions(false);
+                        if (timeoutId) { clearTimeout(timeoutId); setTimeoutId(null); }
+                      }}
+                    >{food}</li>
+                  ))}
+                </ul>
+              )}
+              <input type="number" placeholder="Quantity" value={quantity} min="1"
+                style={{ width: 90, padding: 10, borderRadius: 8, border: '1.5px solid #bbb', fontSize: '1em', color: '#000', background: '#fff' }}
+                onChange={e => {
+                  setQuantity(e.target.value);
+                  if (caloriesPerUnit && !isNaN(Number(e.target.value))) setCalories((Number(e.target.value) * Number(caloriesPerUnit)).toString());
+                  else setCalories('');
+                }} required />
+              <input type="text" placeholder="Unit" value={unit} readOnly style={{ width: 90, padding: 10, borderRadius: 8, border: '1.5px solid #bbb', fontSize: '1em', background: '#f7f7f7', color: '#000' }} />
+              <input type="text" placeholder="Calories" value={calories} readOnly style={{ width: 90, padding: 10, borderRadius: 8, border: '1.5px solid #bbb', fontSize: '1em', background: '#f7f7f7', color: '#000' }} />
+              <button type="submit" style={{ padding: '10px 18px', borderRadius: 8, background: '#43ea4a', color: '#000', fontWeight: 700, border: 'none', fontSize: '1em', boxShadow: '0 2px 8px #43ea4a33' }}>Add</button>
+            </form>
+
+            {error && <div style={{ color: 'red', marginTop: '8px', textAlign: 'center' }}>{error}</div>}
+
+            {/* Calorie Goal Progress Bar */}
+            <div style={{ margin: '32px 0 24px 0', width: '100%' }}>
+              <h2 style={{ textAlign: 'center', fontWeight: 500, fontSize: '1.5em', marginBottom: 12, color: '#000' }}>Calorie Goal</h2>
+              <div style={{ width: '80%', margin: '0 auto', height: 16, background: '#e5e7eb', borderRadius: 8, overflow: 'hidden', boxShadow: '0 1px 2px #0001' }}>
+                <div style={{
+                  width: `${Math.min(100, (entries.reduce((sum, e) => sum + (e.calories || 0), 0) / 2000) * 100)}%`,
+                  height: '100%',
+                  background: '#22c55e',
+                  borderRadius: 8,
+                  transition: 'width 0.5s',
+                }}></div>
+              </div>
+              <div style={{ textAlign: 'center', marginTop: 6, color: '#000', fontWeight: 500 }}>
+                {entries.reduce((sum, e) => sum + (e.calories || 0), 0)} / 2000 kcal
+              </div>
+            </div>
+
+            {/* Donut Chart Section */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '32px 0' }}>
+              <PieChart width={320} height={240}>
+                <Pie
+                  data={[
+                    { name: 'Carbs', value: 120 },
+                    { name: 'Protein', value: 60 },
+                    { name: 'Fats', value: 40 },
+                  ]}
+                  cx={160}
+                  cy={120}
+                  innerRadius={60}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  paddingAngle={3}
+                  dataKey="value"
+                  label
+                >
+                  <Cell key="carbs" fill="#3b82f6" />
+                  <Cell key="protein" fill="#ef4444" />
+                  <Cell key="fats" fill="#38bdf8" />
+                </Pie>
+                <Tooltip />
+              </PieChart>
+              <div style={{ display: 'flex', gap: 24, marginTop: 16, fontSize: '1.1em', fontWeight: 600 }}>
+                <span style={{ color: '#000' }}>carbs ... gr</span>
+                <span style={{ color: '#000' }}>protein ... gr</span>
+                <span style={{ color: '#000' }}>fats ... gr</span>
+              </div>
+            </div>
+          </div>
+          {/* Consumed Foods Table (right) - Redesigned */}
+          <div style={{ flex: 1, minWidth: 320, background: '#f7f7f7', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: 20, marginLeft: '2vw', height: '100%' }}>
+            <h2 style={{ textAlign: 'center', fontSize: '1.2em', fontWeight: 600, marginBottom: 16, color: '#000' }}>Today's Consumption</h2>
+            <table style={{ width: '100%', borderCollapse: 'collapse', background: 'transparent', fontSize: '1em' }}>
+              <thead>
+                <tr style={{ background: '#13b0c0', color: '#fff' }}>
+                  <th style={{ padding: '8px 4px', fontWeight: 700 }}>Food item</th>
+                  <th style={{ padding: '8px 4px', fontWeight: 700 }}>Calories(Kcal)</th>
+                  <th style={{ padding: '8px 4px', fontWeight: 700 }}>Time</th>
+                  <th style={{ padding: '8px 4px', fontWeight: 700 }}>Remove Item</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.length === 0 ? (
+                  <tr><td colSpan="4" style={{ textAlign: 'center', color: '#888', padding: 12, background: '#eaf6ff' }}>No entries yet.</td></tr>
+                ) : (
+                  entries.map((entry, idx) => (
+                    <tr key={entry.id} style={{ background: idx % 2 === 0 ? '#eaf6ff' : '#cbe7fa' }}>
+                      <td style={{ color: '#000', padding: '8px 4px' }}>{entry.food_name}</td>
+                      <td style={{ color: '#000', padding: '8px 4px' }}>{entry.calories}</td>
+                      <td style={{ color: '#000', padding: '8px 4px' }}>{new Date(entry.consumed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                      <td style={{ textAlign: 'center' }}>
+                        <button onClick={() => {
+                          // Remove entry from backend and update state
+                          fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/entries/${entry.id}`, { method: 'DELETE' })
+                            .then(() => setEntries(prev => prev.filter(e => e.id !== entry.id)));
+                        }}
+                          style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', fontWeight: 700, fontSize: '1em', cursor: 'pointer', boxShadow: '0 1px 4px #ef444422' }}
+                        >X</button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+                {/* Total Row */}
+                {entries.length > 0 && (
+                  <tr style={{ background: '#13b0c0', color: '#fff', fontWeight: 700 }}>
+                    <td style={{ padding: '8px 4px' }}>Total</td>
+                    <td style={{ padding: '8px 4px' }}>{entries.reduce((sum, e) => sum + (e.calories || 0), 0)}(Kcal)</td>
+                    <td colSpan="2"></td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            </div>
+          </div>
+        )}
+        {(currentView === 'weekly' || currentView === 'monthly') && (
+          <div className="view-placeholder" style={{ background: '#fff', padding: 40, borderRadius: 10, boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)', textAlign: 'center', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+            <h2 style={{ color: '#34495e', marginBottom: 15 }}>{currentView === 'weekly' ? 'Weekly Consumption' : 'Monthly Consumption'}</h2>
+            <p style={{ color: '#555', fontSize: '1.1em' }}>This section will show your {currentView} stats soon!</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

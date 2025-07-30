@@ -2,20 +2,21 @@
 
 
 FOOD_CALORIES = {
-    "apple": 95.0,
-    "banana": 105.0,
-    "orange": 62.0,
-    "chicken breast": 165.0, # for 100g cooked
-    "rice": 130.0, # for 100g cooked
-    "bread (slice)": 80.0,
-    "egg": 78.0,
-    "milk (cup)": 103.0,
-    "yogurt (plain)": 150.0,
-    "salmon": 208.0, # for 100g cooked
-    "broccoli": 55.0, # for 1 cup chopped
-    "potato (medium)": 161.0, # for a medium baked potato
-    "carrot": 52.0 # for 1 cup chopped
+    "apple": {"calories": 95.0, "unit": "1 medium"},
+    "banana": {"calories": 105.0, "unit": "1 medium"},
+    "orange": {"calories": 62.0, "unit": "1 medium"},
+    "chicken breast": {"calories": 165.0, "unit": "100g"},
+    "rice": {"calories": 130.0, "unit": "100g"},
+    "bread (slice)": {"calories": 80.0, "unit": "1 slice"},
+    "egg": {"calories": 78.0, "unit": "1 large"},
+    "milk (cup)": {"calories": 103.0, "unit": "1 cup"},
+    "yogurt (plain)": {"calories": 150.0, "unit": "1 cup"},
+    "salmon": {"calories": 208.0, "unit": "100g"},
+    "broccoli": {"calories": 55.0, "unit": "1 cup chopped"},
+    "potato (medium)": {"calories": 161.0, "unit": "1 medium"},
+    "carrot": {"calories": 52.0, "unit": "1 cup chopped"}
 }
 
 def get_calories_by_food_name(food_name: str) -> float | None:
-    return FOOD_CALORIES.get(food_name.lower()) 
+    food_info = FOOD_CALORIES.get(food_name.lower())
+    return food_info["calories"] if food_info else None

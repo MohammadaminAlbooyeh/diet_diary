@@ -60,11 +60,11 @@ def get_db():
 ## API Endpoints
 
 # Endpoint to get food suggestions for autocomplete in the frontend
-@app.get("/food-suggestions/", response_model=Dict[str, float])
+from typing import Any
+@app.get("/food-suggestions/", response_model=Dict[str, Dict[str, Any]])
 def get_food_suggestions():
     """
-    Returns a dictionary of food names and their default calorie values
-    to be used for suggestions in the frontend.
+    Returns a dictionary of food names and their calorie/unit info for suggestions in the frontend.
     """
     return food_data.FOOD_CALORIES
 
