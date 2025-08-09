@@ -122,69 +122,73 @@ function App() {
               <h1 style={{ textAlign: 'center', fontFamily: 'inherit', fontWeight: 400, fontSize: '2.2em', color: '#000', marginBottom: 32 }}>Calorie Tracker</h1>
 
           {/* Food Entry Row */}
-            <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 12, marginBottom: 24, alignItems: 'center', justifyContent: 'center' }}>
-              <input type="text" placeholder="Food" value={foodName} autoComplete="off"
-                style={{ width: 120, padding: 10, borderRadius: 8, border: '1.5px solid #bbb', fontSize: '1em', color: '#000', background: '#fff' }}
-                onFocus={() => {
-                  if (!foodName.trim()) setFilteredSuggestions(Object.keys(foodSuggestions));
-                  else setFilteredSuggestions(Object.keys(foodSuggestions).filter(f => f.toLowerCase().includes(foodName.trim().toLowerCase())));
-                  setShowSuggestions(true);
-                  if (timeoutId) clearTimeout(timeoutId);
-                }}
-                onClick={() => {
-                  if (!foodName.trim()) setFilteredSuggestions(Object.keys(foodSuggestions));
-                  else setFilteredSuggestions(Object.keys(foodSuggestions).filter(f => f.toLowerCase().includes(foodName.trim().toLowerCase())));
-                  setShowSuggestions(true);
-                  if (timeoutId) clearTimeout(timeoutId);
-                }}
-                onBlur={() => { const id = setTimeout(() => setShowSuggestions(false), 150); setTimeoutId(id); }}
-                onChange={e => {
-                  const val = e.target.value;
-                  setFoodName(val);
-                  const filtered = Object.keys(foodSuggestions).filter(f => f.toLowerCase().includes(val.trim().toLowerCase()));
-                  setFilteredSuggestions(filtered);
-                  setShowSuggestions(true);
-                  const foodInfo = foodSuggestions[val.trim().toLowerCase()];
-                  if (foodInfo) {
-                    setUnit(foodInfo.unit || '');
-                    setCaloriesPerUnit(foodInfo.calories || '');
-                    if (quantity && !isNaN(Number(quantity))) setCalories((Number(quantity) * Number(foodInfo.calories)).toString());
-                    else setCalories('');
-                  } else {
-                    setUnit(''); setCaloriesPerUnit(''); setCalories('');
-                  }
-                }}
-                required
-              />
-              {showSuggestions && filteredSuggestions.length > 0 && (
-                <ul style={{ position: 'absolute', zIndex: 10, background: '#fff', border: '1px solid #ccc', width: 120, maxHeight: 180, overflowY: 'auto', margin: 0, padding: 0, listStyle: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-                  {filteredSuggestions.map((food) => (
-                    <li key={food} style={{ padding: '8px', cursor: 'pointer' }}
-                      onMouseDown={() => {
-                        setFoodName(food);
-                        const foodInfo = foodSuggestions[food.trim().toLowerCase()];
-                        setUnit(foodInfo?.unit || '');
-                        setCaloriesPerUnit(foodInfo?.calories || '');
-                        if (quantity && foodInfo?.calories) setCalories((Number(quantity) * Number(foodInfo.calories)).toString());
+            <div style={{ position: 'relative', width: 'fit-content', margin: '0 auto' }}>
+              <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 12, marginBottom: 24, alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ position: 'relative' }}>
+                  <input type="text" placeholder="Food" value={foodName} autoComplete="off"
+                    style={{ width: 120, padding: 10, borderRadius: 8, border: '1.5px solid #bbb', fontSize: '1em', color: '#000', background: '#fff' }}
+                    onFocus={() => {
+                      if (!foodName.trim()) setFilteredSuggestions(Object.keys(foodSuggestions));
+                      else setFilteredSuggestions(Object.keys(foodSuggestions).filter(f => f.toLowerCase().includes(foodName.trim().toLowerCase())));
+                      setShowSuggestions(true);
+                      if (timeoutId) clearTimeout(timeoutId);
+                    }}
+                    onClick={() => {
+                      if (!foodName.trim()) setFilteredSuggestions(Object.keys(foodSuggestions));
+                      else setFilteredSuggestions(Object.keys(foodSuggestions).filter(f => f.toLowerCase().includes(foodName.trim().toLowerCase())));
+                      setShowSuggestions(true);
+                      if (timeoutId) clearTimeout(timeoutId);
+                    }}
+                    onBlur={() => { const id = setTimeout(() => setShowSuggestions(false), 150); setTimeoutId(id); }}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFoodName(val);
+                      const filtered = Object.keys(foodSuggestions).filter(f => f.toLowerCase().includes(val.trim().toLowerCase()));
+                      setFilteredSuggestions(filtered);
+                      setShowSuggestions(true);
+                      const foodInfo = foodSuggestions[val.trim().toLowerCase()];
+                      if (foodInfo) {
+                        setUnit(foodInfo.unit || '');
+                        setCaloriesPerUnit(foodInfo.calories || '');
+                        if (quantity && !isNaN(Number(quantity))) setCalories((Number(quantity) * Number(foodInfo.calories)).toString());
                         else setCalories('');
-                        setShowSuggestions(false);
-                        if (timeoutId) { clearTimeout(timeoutId); setTimeoutId(null); }
-                      }}
-                    >{food}</li>
-                  ))}
-                </ul>
-              )}
-              <input type="number" placeholder="Quantity" value={quantity} min="1"
-                style={{ width: 90, padding: 10, borderRadius: 8, border: '1.5px solid #bbb', fontSize: '1em', color: '#000', background: '#fff' }}
-                onChange={e => {
-                  setQuantity(e.target.value);
-                  if (caloriesPerUnit && !isNaN(Number(e.target.value))) setCalories((Number(e.target.value) * Number(caloriesPerUnit)).toString());
-                  else setCalories('');
-                }} required />
-              <input type="text" placeholder="Unit" value={unit} readOnly style={{ width: 90, padding: 10, borderRadius: 8, border: '1.5px solid #bbb', fontSize: '1em', background: '#f7f7f7', color: '#000' }} />
-              <input type="text" placeholder="Calories" value={calories} readOnly style={{ width: 90, padding: 10, borderRadius: 8, border: '1.5px solid #bbb', fontSize: '1em', background: '#f7f7f7', color: '#000' }} />
-              <button type="submit" style={{ padding: '10px 18px', borderRadius: 8, background: '#43ea4a', color: '#000', fontWeight: 700, border: 'none', fontSize: '1em', boxShadow: '0 2px 8px #43ea4a33' }}>Add</button>
-            </form>
+                      } else {
+                        setUnit(''); setCaloriesPerUnit(''); setCalories('');
+                      }
+                    }}
+                    required
+                  />
+                  {showSuggestions && filteredSuggestions.length > 0 && (
+                    <ul style={{ position: 'absolute', top: '100%', left: 0, zIndex: 10, background: '#fff', border: '1px solid #ccc', width: 120, maxHeight: 180, overflowY: 'auto', margin: 0, padding: 0, listStyle: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                      {filteredSuggestions.map((food) => (
+                        <li key={food} style={{ padding: '8px', cursor: 'pointer', color: '#000' }}
+                          onMouseDown={() => {
+                            setFoodName(food);
+                            const foodInfo = foodSuggestions[food.trim().toLowerCase()];
+                            setUnit(foodInfo?.unit || '');
+                            setCaloriesPerUnit(foodInfo?.calories || '');
+                            if (quantity && foodInfo?.calories) setCalories((Number(quantity) * Number(foodInfo.calories)).toString());
+                            else setCalories('');
+                            setShowSuggestions(false);
+                            if (timeoutId) { clearTimeout(timeoutId); setTimeoutId(null); }
+                          }}
+                        >{food}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <input type="number" placeholder="Quantity" value={quantity} min="1"
+                  style={{ width: 90, padding: 10, borderRadius: 8, border: '1.5px solid #bbb', fontSize: '1em', color: '#000', background: '#fff' }}
+                  onChange={e => {
+                    setQuantity(e.target.value);
+                    if (caloriesPerUnit && !isNaN(Number(e.target.value))) setCalories((Number(e.target.value) * Number(caloriesPerUnit)).toString());
+                    else setCalories('');
+                  }} required />
+                <input type="text" placeholder="Unit" value={unit} readOnly style={{ width: 90, padding: 10, borderRadius: 8, border: '1.5px solid #bbb', fontSize: '1em', background: '#f7f7f7', color: '#000' }} />
+                <input type="text" placeholder="Calories" value={calories} readOnly style={{ width: 90, padding: 10, borderRadius: 8, border: '1.5px solid #bbb', fontSize: '1em', background: '#f7f7f7', color: '#000' }} />
+                <button type="submit" style={{ padding: '10px 18px', borderRadius: 8, background: '#43ea4a', color: '#000', fontWeight: 700, border: 'none', fontSize: '1em', boxShadow: '0 2px 8px #43ea4a33' }}>Add</button>
+              </form>
+            </div>
 
             {error && <div style={{ color: 'red', marginTop: '8px', textAlign: 'center' }}>{error}</div>}
 
