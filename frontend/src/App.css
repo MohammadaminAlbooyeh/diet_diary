@@ -1,3 +1,443 @@
+
+body {
+  background: #f6f6f6;
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.food-tracker-container {
+  width: 100vw;
+  min-height: 100vh;
+  margin: 0;
+  background: #fff;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+body, html, #root {
+  width: 100vw;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+  justify-content: space-between;
+  align-items: flex-start;
+  background: linear-gradient(90deg, #f85a5a 60%, #ff8a65 100%);
+  color: #fff;
+  padding: 32px 40px 24px 40px;
+  position: relative;
+}
+
+.header-left {
+  flex: 1;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1rem;
+  margin-bottom: 10px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+.back-btn:hover {
+  opacity: 1;
+}
+
+.food-tracker-header h2 {
+  margin: 0 0 18px 0;
+  font-size: 2.1rem;
+  font-weight: 600;
+}
+
+.header-icons {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 10px;
+  font-size: 1.05rem;
+}
+.header-icons span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-weight: 500;
+}
+
+.header-tip {
+  font-size: 1rem;
+  opacity: 0.85;
+  margin-top: 6px;
+}
+
+.header-right {
+  display: flex;
+  align-items: flex-start;
+}
+.calories-left-circle {
+  width: 120px;
+  height: 120px;
+  background: #fff;
+  color: #f85a5a;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  font-weight: 700;
+  box-shadow: 0 2px 16px rgba(248,90,90,0.10);
+  margin-left: 30px;
+  margin-top: -30px;
+}
+.calories-left-circle div {
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: #f85a5a;
+}
+
+.food-tracker-date {
+  text-align: center;
+  font-size: 1.15rem;
+  color: #888;
+  margin: 18px 0 10px 0;
+  font-weight: 500;
+}
+
+.meals-section {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 40px 0 40px;
+  margin-bottom: 30px;
+}
+
+.meal-card {
+  background: #fafafa;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  flex: 1;
+  min-width: 180px;
+  padding: 22px 18px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+.meal-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.meal-icon {
+  font-size: 2.2rem;
+  margin-bottom: 4px;
+}
+.meal-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: #000;
+}
+.meal-items {
+  font-size: 0.95rem;
+  color: #f85a5a;
+  margin-bottom: 6px;
+}
+.add-item-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: none; /* Removed the border */
+  color: #222; /* Changed color */
+  border-radius: 50%;
+  width: 24px; /* Adjusted size */
+  height: 24px; /* Adjusted size */
+  font-size: 1.2rem; /* Adjusted font size */
+  margin: 0.5rem auto 0 auto; /* Centered the button */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04); /* Added shadow */
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s;
+}
+.add-item-btn {
+  background: none;
+  border: none;
+  color: #222;
+  font-size: 1.5rem;
+  margin: 0.5rem auto 0 auto;
+  cursor: pointer;
+  box-shadow: none;
+  padding: 0;
+  display: block;
+  transition: color 0.2s;
+}
+.add-item-btn:hover {
+  color: #111;
+}
+  background: #fff7f7;
+  border-radius: 14px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 0 14px 0;
+  box-shadow: 0 2px 8px rgba(248,90,90,0.06);
+}
+.recipes-icon, .meals-icon {
+  font-size: 2rem;
+  margin-bottom: 6px;
+}
+.recipes-count, .meals-count {
+  font-size: 1.05rem;
+  color: #f85a5a;
+  margin-top: 4px;
+}
+
+@media (max-width: 900px) {
+  .food-tracker-container {
+    max-width: 98vw;
+    margin: 10px;
+  }
+  .meals-section, .bottom-section {
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 10px 0 10px;
+  }
+  .food-tracker-header {
+    flex-direction: column;
+    padding: 24px 10px 18px 10px;
+  }
+  .calories-left-circle {
+    margin: 20px auto 0 auto;
+  }
+}
+body {
+  background: #f6f6f6;
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.food-tracker-container {
+  max-width: 1000px;
+  margin: 30px auto;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+.food-tracker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: linear-gradient(90deg, #f85a5a 60%, #ff8a65 100%);
+  color: #fff;
+  padding: 32px 40px 24px 40px;
+  position: relative;
+}
+
+.header-left {
+  flex: 1;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1rem;
+  margin-bottom: 10px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+.back-btn:hover {
+  opacity: 1;
+}
+
+.food-tracker-header h2 {
+  margin: 0 0 18px 0;
+  font-size: 2.1rem;
+  font-weight: 600;
+}
+
+.header-icons {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 10px;
+  font-size: 1.05rem;
+}
+.header-icons span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-weight: 500;
+}
+
+.header-tip {
+  font-size: 1rem;
+  opacity: 0.85;
+  margin-top: 6px;
+}
+
+.header-right {
+  display: flex;
+  align-items: flex-start;
+}
+.calories-left-circle {
+  width: 120px;
+  height: 120px;
+  background: #fff;
+  color: #f85a5a;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  font-weight: 700;
+  box-shadow: 0 2px 16px rgba(248,90,90,0.10);
+  margin-left: 30px;
+  margin-top: -30px;
+}
+.calories-left-circle div {
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: #f85a5a;
+}
+
+.food-tracker-date {
+  text-align: center;
+  font-size: 1.15rem;
+  color: #888;
+  margin: 18px 0 10px 0;
+  font-weight: 500;
+}
+
+.meals-section {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 40px 0 40px;
+  margin-bottom: 30px;
+}
+
+.meal-card {
+  background: #fafafa;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  flex: 1;
+  min-width: 180px;
+  padding: 22px 18px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+.meal-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.meal-icon {
+  font-size: 2.2rem;
+  margin-bottom: 4px;
+}
+.meal-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.meal-items {
+  font-size: 0.95rem;
+  color: #f85a5a;
+  margin-bottom: 6px;
+}
+.add-item-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: #f85a5a;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(248,90,90,0.10);
+  transition: background 0.2s;
+}
+.add-item-btn:hover {
+  background: #ff8a65;
+}
+.meal-nutrients {
+  display: flex;
+  gap: 18px;
+  margin-top: 18px;
+  font-size: 0.98rem;
+  color: #888;
+  font-weight: 500;
+}
+.meal-nutrients div {
+  text-align: center;
+}
+
+.bottom-section {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px 40px 32px 40px;
+}
+.recipes-box, .meals-box {
+  background: #fff7f7;
+  border-radius: 14px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 0 14px 0;
+  box-shadow: 0 2px 8px rgba(248,90,90,0.06);
+}
+.recipes-icon, .meals-icon {
+  font-size: 2rem;
+  margin-bottom: 6px;
+}
+.recipes-count, .meals-count {
+  font-size: 1.05rem;
+  color: #f85a5a;
+  margin-top: 4px;
+}
+
+@media (max-width: 900px) {
+  .food-tracker-container {
+    max-width: 98vw;
+    margin: 10px;
+  }
+  .meals-section, .bottom-section {
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 10px 0 10px;
+  }
+  .food-tracker-header {
+    flex-direction: column;
+    padding: 24px 10px 18px 10px;
+  }
+  .calories-left-circle {
+    margin: 20px auto 0 auto;
+  }
+}
 /* frontend/src/App.css */
 
 /* Global reset for html and body to ensure full page coverage */
