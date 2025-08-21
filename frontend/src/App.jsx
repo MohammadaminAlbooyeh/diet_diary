@@ -2,24 +2,90 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 
 function App() {
+  // Helper: group entries by date
+  const groupByDate = (entries) => {
+    const grouped = {};
+    entries.forEach(e => {
+      const date = e.consumed_at ? e.consumed_at.split('T')[0] : 'Unknown';
+      if (!grouped[date]) grouped[date] = [];
+      grouped[date].push(e);
+    });
+    return grouped;
+  };
+
+  // Helper: get last N days
+  const getLastNDates = (n) => {
+    const dates = [];
+    for (let i = 0; i < n; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      dates.push(d.toISOString().split('T')[0]);
+    }
+    return dates.reverse();
+  };
+
+  // Calculate daily summary for last 7 days
+  const groupedByDate = groupByDate(entries);
+  const last7 = getLastNDates(7);
+  const dailySummary = last7.map(date => {
+    const dayEntries = groupedByDate[date] || [];
+    let calories = 0, protein = 0, carbs = 0, fat = 0;
+    dayEntries.forEach(e => {
+      calories += e.calories || 0;
+      const food = FOOD_CALORIES[e.food_name] || {};
+      protein += food.protein || 0;
+      carbs += food.carbs || 0;
+      fat += food.fat || 0;
+    });
+    return { date, calories, protein, carbs, fat };
+  });
+      {/* Daily/Weekly/Monthly Summaries */}
+      <div className="summary-section" style={{margin: '32px 0'}}>
+        <h3>Daily Summary (Last 7 Days)</h3>
+        <table className="summary-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Calories</th>
+              <th>Protein (g)</th>
+              <th>Carbs (g)</th>
+              <th>Fat (g)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dailySummary.map(day => (
+              <tr key={day.date}>
+                <td>{day.date}</td>
+                <td>{day.calories}</td>
+                <td>{day.protein}</td>
+                <td>{day.carbs}</td>
+                <td>{day.fat}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {/* You can add chart.js or recharts here for visual charts! */}
+      </div>
   // Get today's date in 'D MMM' format (e.g., '13 Aug')
   const today = new Date();
   const day = today.getDate();
   const month = today.toLocaleString('en-US', { month: 'short' });
   const formattedDate = `${day} ${month}`;
 
+    // Edit and delete state
+    const [editId, setEditId] = useState(null);
+    const [editData, setEditData] = useState({ food_name: '', calories: '', meal_type: 'Breakfast' });
+
     // Delete entry handler
     const handleDeleteEntry = async (id) => {
       const res = await fetch(`http://localhost:8000/entries/${id}`, { method: 'DELETE' });
       if (res.status === 204) {
-        // Remove from entries
         setEntries(prev => {
           const updated = prev.filter(e => e.id !== id);
           // Rebuild meals state from updated entries
           const newMeals = { Breakfast: [], Lunch: [], Dinner: [], Snacks: [] };
           updated.forEach(e => {
-            // All foods are in Breakfast for now (see previous logic)
-            newMeals.Breakfast.push(e.food_name);
+            if (newMeals[e.meal_type]) newMeals[e.meal_type].push(e.food_name);
           });
           setMeals(newMeals);
           return updated;
@@ -29,6 +95,49 @@ function App() {
       }
     };
 
+    // Start editing
+    const handleEditClick = (entry) => {
+      setEditId(entry.id);
+      setEditData({
+        food_name: entry.food_name,
+        calories: entry.calories,
+        meal_type: entry.meal_type
+      });
+    };
+
+    // Save edit
+    const handleEditSave = async (id) => {
+      const res = await fetch(`http://localhost:8000/entries/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editData)
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setEntries(prev => prev.map(e => e.id === id ? updated : e));
+        setEditId(null);
+        setEditData({ food_name: '', calories: '', meal_type: 'Breakfast' });
+        // Rebuild meals state
+        fetch('http://localhost:8000/entries/')
+          .then(res => res.json())
+          .then(data => {
+            const grouped = { Breakfast: [], Lunch: [], Dinner: [], Snacks: [] };
+            data.forEach(e => {
+              if (grouped[e.meal_type]) grouped[e.meal_type].push(e.food_name);
+            });
+            setMeals(grouped);
+          });
+      } else {
+        alert('Failed to update entry!');
+      }
+    };
+
+    // Cancel edit
+    const handleEditCancel = () => {
+      setEditId(null);
+      setEditData({ food_name: '', calories: '', meal_type: 'Breakfast' });
+    };
+
   // Step 1: State for foods per meal (now from backend)
   const [meals, setMeals] = useState({
     Breakfast: [],
@@ -36,6 +145,8 @@ function App() {
     Dinner: [],
     Snacks: []
   });
+  const mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
+  const [selectedMealType, setSelectedMealType] = useState('Breakfast');
   const [entries, setEntries] = useState([]); // All entries from backend
   // Step 2: State for showing input
   const [showInput, setShowInput] = useState({
@@ -56,15 +167,12 @@ function App() {
       .then(res => res.json())
       .then(data => {
         setEntries(data);
-        // Group entries by meal (if you want to support meal type, you need to add it to backend)
-        // For now, assign all to Breakfast for demo, or group by food name, etc.
-        // Here, we just show all entries in Breakfast for demo:
-        setMeals({
-          Breakfast: data.map(e => e.food_name),
-          Lunch: [],
-          Dinner: [],
-          Snacks: []
+        // Group entries by meal_type
+        const grouped = { Breakfast: [], Lunch: [], Dinner: [], Snacks: [] };
+        data.forEach(e => {
+          if (grouped[e.meal_type]) grouped[e.meal_type].push(e.food_name);
         });
+        setMeals(grouped);
       });
   }, []);
 
@@ -90,15 +198,16 @@ function App() {
   const handleAddClick = (meal) => {
     setShowInput((prev) => ({ ...prev, [meal]: true }));
     setInputValue('');
+    setSelectedMealType(meal);
   };
   // Handle food submit
   const handleFoodSubmit = async (meal) => {
     if (inputValue && FOOD_CALORIES[inputValue.toLowerCase()]) {
-      // Send to backend
+      // Send to backend with meal_type
       const res = await fetch('http://localhost:8000/entries/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ food_name: inputValue })
+        body: JSON.stringify({ food_name: inputValue, meal_type: meal })
       });
       if (res.ok) {
         const newEntry = await res.json();
@@ -177,16 +286,35 @@ function App() {
           </thead>
           <tbody>
             {entries.length === 0 ? (
-              <tr><td colSpan="3" style={{textAlign: 'center'}}>No foods added yet</td></tr>
+              <tr><td colSpan="4" style={{textAlign: 'center'}}>No foods added yet</td></tr>
             ) : (
               entries.map(entry => (
                 <tr key={entry.id}>
-                  <td>{entry.food_name}</td>
-                  <td>{entry.calories}</td>
-                  <td>{entry.consumed_at ? entry.consumed_at.split('T')[0] : ''}</td>
-                    <td>
-                      <button onClick={() => handleDeleteEntry(entry.id)} style={{color: '#fff', background: '#f85a5a', border: 'none', borderRadius: '4px', padding: '2px 10px', cursor: 'pointer'}}>Delete</button>
-                    </td>
+                  {editId === entry.id ? (
+                    <>
+                      <td><input value={editData.food_name} onChange={e => setEditData(d => ({ ...d, food_name: e.target.value }))} /></td>
+                      <td><input type="number" value={editData.calories} onChange={e => setEditData(d => ({ ...d, calories: e.target.value }))} /></td>
+                      <td>
+                        <select value={editData.meal_type} onChange={e => setEditData(d => ({ ...d, meal_type: e.target.value }))}>
+                          {mealTypes.map(mt => <option key={mt} value={mt}>{mt}</option>)}
+                        </select>
+                      </td>
+                      <td>
+                        <button onClick={() => handleEditSave(entry.id)} style={{color: '#fff', background: '#4caf50', border: 'none', borderRadius: '4px', padding: '2px 10px', cursor: 'pointer', marginRight: 4}}>Save</button>
+                        <button onClick={handleEditCancel} style={{color: '#fff', background: '#888', border: 'none', borderRadius: '4px', padding: '2px 10px', cursor: 'pointer'}}>Cancel</button>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td>{entry.food_name}</td>
+                      <td>{entry.calories}</td>
+                      <td>{entry.consumed_at ? entry.consumed_at.split('T')[0] : ''}</td>
+                      <td>
+                        <button onClick={() => handleEditClick(entry)} style={{color: '#fff', background: '#2196f3', border: 'none', borderRadius: '4px', padding: '2px 10px', cursor: 'pointer', marginRight: 4}}>Edit</button>
+                        <button onClick={() => handleDeleteEntry(entry.id)} style={{color: '#fff', background: '#f85a5a', border: 'none', borderRadius: '4px', padding: '2px 10px', cursor: 'pointer'}}>Delete</button>
+                      </td>
+                    </>
+                  )}
                 </tr>
               ))
             )}
@@ -219,10 +347,10 @@ function MealCard({ meal, items, carbs, protein, fat, foods, onAddClick, showInp
             placeholder="Enter food name..."
             value={inputValue}
             onChange={e => setInputValue(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') onFoodSubmit(); }}
+            onKeyDown={e => { if (e.key === 'Enter') onFoodSubmit(meal); }}
             autoFocus
           />
-          <button onClick={onFoodSubmit}>Add</button>
+          <button onClick={() => onFoodSubmit(meal)}>Add</button>
         </div>
       ) : (
         <button className="add-item-btn" onClick={onAddClick}>+</button>

@@ -1,3 +1,25 @@
+# Pydantic model for updating a Calorie Entry
+class CalorieEntryUpdate(BaseModel):
+    food_name: Optional[str] = None
+    calories: Optional[float] = None
+    meal_type: Optional[str] = None
+
+# Endpoint to update a calorie entry
+@app.put("/entries/{entry_id}", response_model=CalorieEntryResponse)
+def update_calorie_entry(entry_id: int, entry: CalorieEntryUpdate, db: Session = Depends(get_db)):
+    db_entry = db.query(models.CalorieEntry).filter(models.CalorieEntry.id == entry_id).first()
+    if db_entry is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entry not found")
+    if entry.food_name is not None:
+        db_entry.food_name = entry.food_name
+    if entry.calories is not None:
+        db_entry.calories = entry.calories
+    if entry.meal_type is not None:
+        db_entry.meal_type = entry.meal_type
+    db.commit()
+    db.refresh(db_entry)
+    db_entry.consumed_at = db_entry.consumed_at.isoformat()
+    return db_entry
 # backend/main.py
 from fastapi import FastAPI, Depends, HTTPException, status # Import status for HTTP status codes
 from sqlalchemy.orm import Session
@@ -33,16 +55,21 @@ app.add_middleware(
 )
 
 # Pydantic model for the request body when creating a new Calorie Entry
+
+# Add meal_type to creation model
 class CalorieEntryCreate(BaseModel):
     food_name: str
     calories: Optional[float] = None # Calories field is now optional
+    meal_type: str # Breakfast, Lunch, Dinner, Snacks
 
 # Pydantic model for the response body when reading or creating a Calorie Entry
+
+# Add meal_type to response model
 class CalorieEntryResponse(BaseModel):
     id: int
     food_name: str
     calories: float
-    # This field is expected to be a string in the response model
+    meal_type: str
     consumed_at: str
 
     class Config:
@@ -103,8 +130,8 @@ def create_calorie_entry(entry: CalorieEntryCreate, db: Session = Depends(get_db
         # If calories were manually provided, use the user's input
         final_calories = entry.calories
 
-    # Create a new CalorieEntry model instance
-    db_entry = models.CalorieEntry(food_name=entry.food_name, calories=final_calories)
+    # Create a new CalorieEntry model instance with meal_type
+    db_entry = models.CalorieEntry(food_name=entry.food_name, calories=final_calories, meal_type=entry.meal_type)
     db.add(db_entry)  # Add the new entry object to the session
     db.commit()       # Commit the transaction to save to the database
     db.refresh(db_entry) # Refresh the object to get any database-generated values (like 'id', 'consumed_at')

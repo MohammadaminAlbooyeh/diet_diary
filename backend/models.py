@@ -9,4 +9,5 @@ class CalorieEntry(Base):
     id = Column(Integer, primary_key=True, index=True)
     food_name = Column(String, index=True)
     calories = Column(Float)
+    meal_type = Column(String, index=True, default="Breakfast") # New: meal type (Breakfast, Lunch, Dinner, Snack)
     consumed_at = Column(DateTime, default=func.now()) # Date and time of entry
